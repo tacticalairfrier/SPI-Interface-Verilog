@@ -28,16 +28,22 @@ reg [7:0] shiftreg, shiftregnext;
 reg [2:0] counter_sclk, data_count, data_count_next;
 reg [1:0] state, nextstate;
 reg sclk_internal; 
+reg rx, rx_prev;
 //clocked state driver block
 always@(posedge clkin, negedge reset)begin
     if(!reset)begin
         sclk_internal <= `FALSE;
         counter_sclk <= DIVIDER;
+        rx <= `FALSE;
+        rx_prev <= `FALSE;
         state <= IDLE;
     end
     else if(counter_sclk>0) counter_sclk <= counter_sclk-1;
     else begin
         //sclk internal will directly forwarded to sclk depending upon the time
+        // storing the recieved data in rx and rx_prev
+        rx <= miso;
+        rx_prev <= rx;
         counter_sclk <= DIVIDER;
         sclk_internal = ~sclk_internal;
         case(state)
