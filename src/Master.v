@@ -65,7 +65,28 @@ it updates data_out register every 8 bits to keep it going
 it gives out its own clock only when ITS supposed to transmit data
 also the clock polarity and clock phase are xored or xnored depending upon hte condition arised there
 */
+//reciever code block as reciever always samples the data
 always@(*)begin
     
+end
+
+//driver for the sclk
+always@(*)begin
+    //prevent latch inferrence by setting sclk to false by default 
+    sclk = `FALSE;
+    if(cpol)begin
+        case(state)
+            IDLE: sclk = `TRUE;
+            TRANSMIT: sclk = sclk_internal;
+            DONE: sclk = `TRUE;
+        endcase
+    else begin
+            case(state)
+            IDLE: sclk = `FALSE;
+            TRANSMIT: sclk = sclk_internal;
+            DONE: sclk = `FALSE;
+        endcase
+    end
+    end
 end
 endmodule
