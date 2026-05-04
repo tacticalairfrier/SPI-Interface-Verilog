@@ -14,7 +14,7 @@ module Master#(parameter CLK_FREQ = 100_000_000, parameter SCLK_FREQ = 25_000_00
     output reg [7:0] data_out,
     //inputs for the interface
     //outputs for the interface
-    output reg sclk, mosi,
+    output reg sclk, mosi, data_valid,
     output reg [3:0] slave_select
 );
 //declaring the sclk divider here
@@ -24,6 +24,8 @@ localparam IDLE = 2'b0, TRANSMIT = 2'b1,  DONE = 2'b3;
 //sclk parameters here
 //general fsm parameters here
 localparam DATA_COUNT = 3'b7;
+//parameter for dummy bite given to the slave for toggling sclk
+localparam = DUMMY_DATA = 8'h00;
 reg [7:0] shiftreg, shiftregnext;
 reg [2:0] counter_sclk, data_count, data_count_next;
 reg [1:0] state, nextstate;
@@ -59,6 +61,12 @@ always@(posedge clkin, negedge reset)begin
         endcase
     end
 end
+//combinational block for putting dataIn into the shiftreg
+always(*)begin
+    if(tx_enable)begin
+        
+    end
+end
 /*
 logic for reciever, that is the master is sampling data in miso every time
 it updates data_out register every 8 bits to keep it going
@@ -68,6 +76,29 @@ also the clock polarity and clock phase are xored or xnored depending upon hte c
 //reciever code block as reciever always samples the data
 always@(*)begin
     
+    
+end
+//combinational logic for the data transmition 
+always(*)begin
+    //default mosi = false
+    //preventing latch inferrence
+    nextstate = state;
+    data_count_next = data_count;
+    mosi = `FALSE;
+    case(state)
+    IDLE: begin
+        mosi = `FALSE;
+        if(tx_enable) nextstate = TRANSMIT;
+        else nextstate = IDLE;
+    end
+    TRANSMIT: begin
+    end
+    STOP: begin
+        shiftreg = DUMMY_DATA;
+        nextstate = TRANSMIT;
+
+    end
+    endcase
 end
 
 //driver for the sclk
@@ -87,6 +118,14 @@ always@(*)begin
             DONE: sclk = `FALSE;
         endcase
     end
+    end
+end
+//slave select line driver
+always@(*)begin
+    slave_select = 4'b0;
+    // if the data is valid, then only can you change the slave,
+    if(data_valid)begin
+        slave_select[slave_select_in] = `FALSE;
     end
 end
 endmodule
