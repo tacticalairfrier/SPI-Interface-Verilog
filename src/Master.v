@@ -20,7 +20,7 @@ module Master#(parameter CLK_FREQ = 100_000_000, parameter SCLK_FREQ = 25_000_00
 //declaring the sclk divider here
 localparam DIVIDER = CLK_FREQ/SCLK_FREQ;
 //declaring the state parameters here
-localparam IDLE = 2'b0, TRANSMIT = 2'b1,  DONE = 2'b3;
+localparam IDLE = 2'b0, TRANSMIT = 2'b1, DONE = 2'b2;
 //sclk parameters here
 //general fsm parameters here
 localparam DATA_COUNT = 3'b7;
@@ -77,7 +77,7 @@ always(*)begin
     shiftregnext = shiftreg;
     nextstate = state;
     data_count_next = data_count;
-    slave_select = 4'b0;
+    slave_select = 4'd0;
     sclk = `FALSE;
     mosi = `FALSE;
     data_valid = `FALSE;
