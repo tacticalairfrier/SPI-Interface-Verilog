@@ -25,14 +25,17 @@ localparam IDLE = 2'b0, TRANSMIT = 2'b1,  DONE = 2'b3;
 //general fsm parameters here
 localparam DATA_COUNT = 3'b7;
 //parameter for dummy bite given to the slave for toggling sclk
-localparam = DUMMY_DATA = 8'h00;
+localparam = DUMMY_DATA = 8'b0;
 reg [7:0] shiftreg, shiftregnext;
 reg [2:0] counter_sclk, data_count, data_count_next;
 reg [1:0] state, nextstate;
 reg sclk_internal; 
 reg rx, rx_prev;
 //clocked state driver block
+//low cortisol code
 always@(posedge clkin, negedge reset)begin
+        rx <= sclk_internal;
+        rx_prev <= rx;
     if(!reset)begin
         sclk_internal <= `FALSE;
         counter_sclk <= DIVIDER;
@@ -44,8 +47,6 @@ always@(posedge clkin, negedge reset)begin
     else begin
         //sclk internal will directly forwarded to sclk depending upon the time
         // storing the recieved data in rx and rx_prev
-        rx <= miso;
-        rx_prev <= rx;
         counter_sclk <= DIVIDER;
         sclk_internal = ~sclk_internal;
         case(state)
@@ -57,75 +58,65 @@ always@(posedge clkin, negedge reset)begin
         DONE:begin
             state <= nextstate;
             data_count <= data_count_next;
+            data_valid <= `TRUE;
         end
         endcase
     end
 end
 //combinational block for putting dataIn into the shiftreg
-always(*)begin
-    if(tx_enable)begin
-        
-    end
-end
-/*
-logic for reciever, that is the master is sampling data in miso every time
-it updates data_out register every 8 bits to keep it going
-it gives out its own clock only when ITS supposed to transmit data
-also the clock polarity and clock phase are xored or xnored depending upon hte condition arised there
-*/
-//reciever code block as reciever always samples the data
-always@(*)begin
-    
-    
-end
+//high cortisol code
+// logic for reciever, that is the master is sampling data in miso every time
+// it updates data_out register every 8 bits to keep it going
+// it gives out its own clock only when ITS supposed to transmit data
+// also the clock polarity and clock phase are xored or xnored depending upon hte condition arised there
 //combinational logic for the data transmition 
+//transmitter, for the thing
 always(*)begin
     //default mosi = false
     //preventing latch inferrence
+    shiftregnext = shiftreg;
     nextstate = state;
     data_count_next = data_count;
+    slave_select = 4'b0;
+    sclk = `FALSE;
     mosi = `FALSE;
+    data_valid = `FALSE;
+    if(sclk_internal)begin
     case(state)
     IDLE: begin
-        mosi = `FALSE;
-        if(tx_enable) nextstate = TRANSMIT;
-        else nextstate = IDLE;
+        sclk = cpol;
+        mosi = shiftreg[0];
+        if(tx_enable)begin
+            nextstate = TRANSMIT;
+            shiftregnext = data_in;
+            data_count_next = DATA_COUNT;
+        end 
+        else begin
+            nextstate = IDLE;
+            shiftregnext = DUMMY_DATA;
+        end
     end
     TRANSMIT: begin
+        sclk = sclk_internal;
+        shiftregnext = {`FALSE, shiftreg[7:1]};
+        mosi = shiftreg[0];
+        if(data_count>0)begin 
+            data_count_next = data_count - 1;
+            nextstate = TRANSMIT;
+        end
+        else nextstate = DONE;
     end
-    STOP: begin
-        shiftreg = DUMMY_DATA;
-        nextstate = TRANSMIT;
-
-    end
-    endcase
-end
-
-//driver for the sclk
-always@(*)begin
-    //prevent latch inferrence by setting sclk to false by default 
-    sclk = `FALSE;
-    if(cpol)begin
-        case(state)
-            IDLE: sclk = `TRUE;
-            TRANSMIT: sclk = sclk_internal;
-            DONE: sclk = `TRUE;
-        endcase
-    else begin
-            case(state)
-            IDLE: sclk = `FALSE;
-            TRANSMIT: sclk = sclk_internal;
-            DONE: sclk = `FALSE;
-        endcase
-    end
-    end
-end
-//slave select line driver
-always@(*)begin
-    slave_select = 4'b0;
-    // if the data is valid, then only can you change the slave,
-    if(data_valid)begin
+    DONE: begin
+        sclk = cpol;
+        nextstate = IDLE;
+        //selection of slave happens in the done state
         slave_select[slave_select_in] = `FALSE;
     end
+    endcase
+    end
+end
+//reciever for the thing
+always(*)begin
+    
 end
 endmodule
