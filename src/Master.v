@@ -14,18 +14,19 @@ module Master#(parameter CLK_FREQ = 100_000_000, parameter SCLK_FREQ = 25_000_00
     output reg [7:0] data_out,
     //inputs for the interface
     //outputs for the interface
-    output reg sclk, mosi, data_valid,
+    output reg sclk, mosi,
     output reg [3:0] slave_select
 );
+//add a data valid register in the end
 //declaring the sclk divider here
 localparam DIVIDER = CLK_FREQ/SCLK_FREQ;
 //declaring the state parameters here
-localparam IDLE = 2'b0, TRANSMIT = 2'b1, DONE = 2'b2;
+localparam IDLE = 2'd0, TRANSMIT = 2'd1, DONE = 2'd2;
 //sclk parameters here
 //general fsm parameters here
-localparam DATA_COUNT = 3'b7;
+localparam DATA_COUNT = 3'd7;
 //parameter for dummy bite given to the slave for toggling sclk
-localparam = DUMMY_DATA = 8'b0;
+localparam DUMMY_DATA = 8'd0;
 reg [7:0] shiftreg, shiftregnext;
 reg [2:0] counter_sclk, data_count, data_count_next;
 reg [1:0] state, nextstate;
@@ -42,6 +43,7 @@ always@(posedge clkin, negedge reset)begin
         rx <= `FALSE;
         rx_prev <= `FALSE;
         state <= IDLE;
+        shiftreg <= DUMMY_DATA;
     end
     else if(counter_sclk>0) counter_sclk <= counter_sclk-1;
     else begin
@@ -50,15 +52,20 @@ always@(posedge clkin, negedge reset)begin
         counter_sclk <= DIVIDER;
         sclk_internal = ~sclk_internal;
         case(state)
-        IDLE: state <= nextstate;
+        IDLE:begin
+            state <= nextstate;
+            shiftreg <= shiftregnext;
+            data_count <= data_count_next;
+        end
         TRANSMIT:begin
             state <= nextstate;
             data_count <= data_count_next;
+            shiftreg <= shiftregnext;
         end
         DONE:begin
             state <= nextstate;
             data_count <= data_count_next;
-            data_valid <= `TRUE;
+            shiftreg <= shiftregnext;
         end
         endcase
     end
@@ -71,21 +78,18 @@ end
 // also the clock polarity and clock phase are xored or xnored depending upon hte condition arised there
 //combinational logic for the data transmition 
 //transmitter, for the thing
-always(*)begin
+always@(*)begin
     //default mosi = false
     //preventing latch inferrence
     shiftregnext = shiftreg;
     nextstate = state;
     data_count_next = data_count;
     slave_select = 4'd0;
-    sclk = `FALSE;
-    mosi = `FALSE;
-    data_valid = `FALSE;
+    if(!reset) mosi = `FALSE;
     if(sclk_internal)begin
     case(state)
     IDLE: begin
         sclk = cpol;
-        mosi = shiftreg[0];
         if(tx_enable)begin
             nextstate = TRANSMIT;
             shiftregnext = data_in;
@@ -98,8 +102,8 @@ always(*)begin
     end
     TRANSMIT: begin
         sclk = sclk_internal;
-        shiftregnext = {`FALSE, shiftreg[7:1]};
-        mosi = shiftreg[0];
+        shiftregnext = {shiftreg[6:0],`FALSE};
+        mosi = shiftreg[7];
         if(data_count>0)begin 
             data_count_next = data_count - 1;
             nextstate = TRANSMIT;
@@ -115,8 +119,15 @@ always(*)begin
     endcase
     end
 end
-//reciever for the thing
-always(*)begin
-    
+//driver for sclk
+always@(*)begin
+    //toggles only when needed in the transmittion state
+    if(!reset) sclk = `FALSE;
+    else if(state == TRANSMIT) sclk = sclk_internal;
+    else sclk = cpol;
 end
+//reciever for the thing
+// always@(*)begin
+    
+// end
 endmodule
