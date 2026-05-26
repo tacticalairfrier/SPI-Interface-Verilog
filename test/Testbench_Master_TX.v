@@ -16,8 +16,7 @@ Master DUT_MS_0(
     .slave_select_in(slave_select_in),
     .mosi(mosi_tb),
     .data_in(data_in_tb),
-    .cpol(cpol),
-    .cpha(cpha)
+    .mode({cpha,cpol})
 );
 //generating the clock here
 always #5 clkin_tb = ~clkin_tb;
@@ -30,15 +29,23 @@ initial begin
     data_in_tb = 8'b01010101;
 end
 
-always #400 data_in_tb = $urandom_range(0,255);
+always #600 data_in_tb = $urandom_range(0,255);
 
 initial begin
     $dumpfile("sim.vcd");
     $dumpvars(0,testbench);
     cpol = `FALSE;
-    #2000;
+    cpha = `FALSE;
+    #1000;
     cpol = `TRUE;
-    #2000;
+    cpha = `FALSE;
+    #1000;
+    cpol = `FALSE;
+    cpha = `TRUE;
+    #1000;
+    cpol = `TRUE;
+    cpha = `TRUE;
+    #1000;
     enable =`FALSE;
     #1000;
     $finish;
