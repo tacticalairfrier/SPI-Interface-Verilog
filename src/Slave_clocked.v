@@ -11,12 +11,12 @@ module Slave#(parameter CLK_FREQ = 100_000_000)(
     output reg sdo
 );
 //state machine's state here 
-localparam IDLE = 2'b0, TRANSMIT = 2'b1, STOP = 2'b2;
+localparam IDLE = 2'b0, TRANSMIT = 2'b1, STOP = 2'b2, RECIEVE = ;
 //since the slave is always oversampling and recieving what is there
 //logic behind this is that slave does
 localparam DATACOUNT = 3'd7;
 reg rx, edgedetected; 
-reg [7:0] shiftreg_tx, shiftregnext_rx shiftreg_rx;
+reg [7:0] shiftreg_tx, shiftregnext_tx, shiftreg_rx;
 reg [2:0] datacounter;
 reg [1:0] state, nextstate;
 always@(posedge clkin, negedge reset)begin
@@ -45,8 +45,8 @@ always@(posedge clkin, negedge reset)begin
         else state <= IDLE;
     end
 end
-//transmitter for the slave but since mode is an input to this guy 
 //we need to integrate mode into this guy
+//transmitter combinational block
 always@(*)begin 
     
 end
