@@ -60,6 +60,7 @@ always@(posedge clkin, negedge reset)begin
             state <= nextstate;
             shiftreg <= shiftregnext;
             data_count <= data_count_next;
+            shiftreg_rx <= shiftregnext_rx;
         end
         TRANSMIT:begin
             state <= nextstate;
@@ -97,7 +98,7 @@ always@(*)begin
     data_count_next = data_count;
     slave_select = 4'b1111;
     if(!reset) mosi = `FALSE;
-    if(sclk_internal)begin
+    if(!sclk_internal)begin
     case (state)
     IDLE: begin
         data_count_next = DATA_COUNT;
@@ -107,9 +108,8 @@ always@(*)begin
             shiftregnext = data_in;
         end 
         else begin
-            //changed the nextstate here to transmit
-            nextstate = TRANSMIT;
-            shiftregnext = DUMMY_DATA;
+            //changed the nextstate here to idle if tx isnt enabled
+            nextstate = IDLE;
         end
     end
     TRANSMIT: begin
@@ -147,22 +147,22 @@ shiftregnext_rx = shiftreg_rx;
 if(!reset) shiftregnext_rx = 8'd0;
 else begin
     case(state)
-    IDLE:shiftregnext_rx = 8'd0;
+    IDLE: shiftregnext_rx = {shiftreg_rx[6:0], miso};
     TRANSMIT:begin
         if(^mode_internal)begin
             //falling edge
             if(rx&~sclk_internal)begin
-                shiftregnext_rx = {miso, shiftreg_rx[7:1]};
+                shiftregnext_rx = {shiftreg_rx[6:0], miso};
             end
         end
         else begin
             //rising edge
             if(~rx&sclk_internal)begin 
-                shiftregnext_rx = {miso, shiftreg_rx[7:1]};
+                shiftregnext_rx = {shiftreg_rx[6:0], miso};
             end
         end
     end
-    DONE: shiftregnext_rx = 8'h00;
+        
     endcase
 end
 end
