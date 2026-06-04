@@ -46,6 +46,7 @@ always@(posedge clkin, negedge reset)begin
         rx <= `FALSE;
         state <= IDLE;
         shiftreg <= DUMMY_DATA;
+        shiftreg_rx <=  8'h00;
         data_out <= 8'd0;
     end
     else if(counter_sclk>1) counter_sclk <= counter_sclk-1;
@@ -54,7 +55,8 @@ always@(posedge clkin, negedge reset)begin
         // storing the recieved data in rx and rx_prev
         counter_sclk <= DIVIDER;
         sclk_internal <= ~sclk_internal;
-        rx <= sclk_internal;
+        // rx <= sclk_internal;
+        rx <= sclk;
         case(state)
         IDLE:begin
             state <= nextstate;
@@ -120,12 +122,23 @@ always@(*)begin
             nextstate = TRANSMIT;
         end
         else nextstate = DONE;
+        slave_select[slave_select_in] = `FALSE;
     end
-    DONE: nextstate = IDLE;
+    DONE:begin
+        nextstate = IDLE;
+        slave_select = 4'b1111;
+    end 
     //selection of slave happens in the done state
     endcase
     end
-    else mosi = shiftreg[7];
+    else begin
+        mosi = shiftreg[7];
+        case(state)
+        IDLE:slave_select[slave_select_in] = `TRUE;
+        TRANSMIT: slave_select[slave_select_in] = `FALSE;
+        DONE:slave_select[slave_select_in] = `FALSE;
+        endcase
+    end
 end
 //driver for sclk
 //cpol is mode[1] cpha is mode[0]
@@ -151,13 +164,13 @@ else begin
     TRANSMIT:begin
         if(^mode_internal)begin
             //falling edge
-            if(rx&~sclk_internal)begin
+            if(rx&~sclk)begin
                 shiftregnext_rx = {shiftreg_rx[6:0], miso};
             end
         end
         else begin
             //rising edge
-            if(~rx&sclk_internal)begin 
+            if(~rx&sclk)begin 
                 shiftregnext_rx = {shiftreg_rx[6:0], miso};
             end
         end
