@@ -36,6 +36,7 @@ always@(posedge clkin, negedge reset)begin
                 IDLE:begin
                     // state <= nextstate;
                     state <= RXTX;
+                    data_out <= shiftreg_rx;
                     shiftreg_tx <= data_in;
                     shiftreg_rx <= shiftregnext_rx;
                     mode_internal <= mode;
@@ -49,7 +50,7 @@ always@(posedge clkin, negedge reset)begin
                 STOP:begin
                     state <= nextstate;
                     datacounter <= datacounternext;
-                    data_out <= shiftreg_rx;
+                    // data_out <= shiftreg_rx;
                     shiftreg_tx <= shiftregnext_tx;
                     shiftreg_rx <= shiftregnext_rx;
                     // data_out <= shiftreg_rx;
@@ -98,7 +99,7 @@ always@(*)begin
                 datacounternext = datacounter-1;
                 // if(datacounternext > 0) nextstate = RXTX;
                 if(datacounter > 0) nextstate = RXTX;
-                else nextstate  = STOP;
+                else nextstate = STOP;
             end
             STOP:begin
                 nextstate = IDLE;
@@ -163,7 +164,7 @@ always@(*)begin
                     //falling edge
                     if(rx&~sclk) shiftregnext_rx = {shiftreg_rx[6:0], sdi};
                 end
-                 else begin
+                else begin
                     //rising edge
                     if(~rx&sclk) shiftregnext_rx = {shiftreg_rx[6:0], sdi};
                 end

@@ -93,12 +93,16 @@ initial begin
     // $finish;
     counter = 2'b00;
     while(counter != 2'b11)begin
+        enable = `TRUE;
         TestWithMode(counter, 20);
         counter = counter + 2'b01;
+        enable = `FALSE;
         #800;
     end
     #800;
+    enable = `TRUE;
     TestWithMode(2'b11,20);
+    enable = `FALSE;
     $finish;
 end
 endmodule
