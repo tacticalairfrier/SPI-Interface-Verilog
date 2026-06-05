@@ -7,7 +7,7 @@ module testbench;
 reg [7:0] data_in_tb;
 reg [3:0] slave_select_out;
 reg [1:0] slave_select_in;
-reg [1:0] mode_tb;
+reg [1:0] mode_tb, counter;
 reg clkgen, reset, enable;
 reg sdi_tb;
 wire slavechip;
@@ -58,24 +58,47 @@ always #5 clkgen = ~clkgen;
 //the random number generator
 // always #820 data_in_tb = $urandom_range(0,255);
 assign slavechip = slave_select_out[0];
+//making a task for the thing at various mdoes
+task TestWithMode (input [1:0] mode_task, input integer Times);
+begin
+    enable = `TRUE;
+    $display("testing at mode %d" ,mode_task);
+    mode_tb = mode_task;
+    repeat(Times)begin
+        data_in_tb = $urandom_range(0,255);
+        #800;
+    end
+    $monitor("the data that was sent is %d and recieved from last transaction %d", data_in_tb, data_out_tb);
+    enable = `FALSE;
+end
+endtask
 initial begin
     //first testing the master to slave connection 
     //then the slave to master connection and then the full duplex connection
     $dumpfile("sim.vcd");
     $dumpvars(0,testbench);
-    enable = `TRUE;
-    // slave_select = `FALSE;
+    // enable = `TRUE;
+    // // slave_select = `FALSE;
     slave_select_in = 2'b00;
-    
-    repeat(20)begin
-        // slave_select = `FALSE;
-        // enable = `TRUE;
-        data_in_tb = $urandom_range(0,255);
+
+    // repeat(20)begin
+    //     // slave_select = `FALSE;
+    //     // enable = `TRUE;
+    //     data_in_tb = $ushourandom_range(0,255);
+    //     #800;
+    //     // slave_select = `TRUE;
+    //     // enable = `FALSE;
+    //     #80;
+    // end
+    // $finish;
+    counter = 2'b00;
+    while(counter != 2'b11)begin
+        TestWithMode(counter, 20);
+        counter = counter + 2'b01;
         #800;
-        // slave_select = `TRUE;
-        // enable = `FALSE;
-        #80;
     end
+    #800;
+    TestWithMode(2'b11,20);
     $finish;
 end
 endmodule

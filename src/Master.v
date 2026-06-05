@@ -104,14 +104,15 @@ always@(*)begin
     case (state)
     IDLE: begin
         data_count_next = DATA_COUNT;
-        slave_select[slave_select_in] = `FALSE;
         if(tx_enable)begin
             nextstate = TRANSMIT;
             shiftregnext = data_in;
+            slave_select[slave_select_in] = `FALSE;
         end 
         else begin
             //changed the nextstate here to idle if tx isnt enabled
             nextstate = IDLE;
+            slave_select[slave_select_in] = `TRUE;
         end
     end
     TRANSMIT: begin
@@ -147,7 +148,7 @@ always@(*)begin
     if(!reset) sclk = `FALSE;
     else begin
         sclk = mode_internal[1];
-        if(state == TRANSMIT || state == DONE)begin
+        if(state == TRANSMIT)begin  //|| state == DONE
             if(^mode_internal) sclk = sclk_internal;
             else sclk = ~sclk_internal;
         end
@@ -178,5 +179,10 @@ else begin
         
     endcase
 end
+end
+always@(*)begin
+    if(!reset)begin
+        
+    end
 end
 endmodule

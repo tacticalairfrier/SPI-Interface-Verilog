@@ -107,6 +107,7 @@ always@(*)begin
             end
             endcase
         end
+        else sdo = shiftreg_tx[7];
     end
     else begin
         //falling edge
@@ -156,7 +157,19 @@ always@(*)begin
             if(~rx&sclk) shiftregnext_rx = {shiftreg_rx[6:0], sdi};
         end
         end
-        STOP: shiftregnext_rx = shiftreg_rx;
+        STOP:begin
+            if(mode[0])begin
+                if(^mode_internal) begin
+                    //falling edge
+                    if(rx&~sclk) shiftregnext_rx = {shiftreg_rx[6:0], sdi};
+                end
+                 else begin
+                    //rising edge
+                    if(~rx&sclk) shiftregnext_rx = {shiftreg_rx[6:0], sdi};
+                end
+            end
+            else shiftregnext_rx = shiftreg_rx;
+        end 
     endcase
     // if(state==IDLE)begin
     // if(^mode_internal) begin
