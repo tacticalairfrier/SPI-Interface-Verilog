@@ -19,10 +19,13 @@ This implementation targets the standard 4-wire SPI bus (SCLK, MOSI, MISO, CS). 
 | `images/Master/Schematic_Synth.pdf` | The Vivado-Generated Schematic after synthesis for the master |
 | `images/Master/schematic_generated.pdf` | The Vivado-Generated schematic of the elaborated design of the master | 
 | `images/Slave/Schematic_Synth.pdf` | The Vivado-Generated Schematic after synthesis for the slave |
-| `images/Slave/schematic_generated.pdf` | The Vivado-Generated schematic of the elaborated design of the slave | 
+| `images/Slave/schematic_generated.pdf` | The Vivado-Generated schematic of the elaborated design of the slave |
+| `images/gds/Master_KLayout.png` | Screenshot of the opened klayout view of the master |
+| `images/gds/Slave_KLayout.png` | Screenshot of the opened klayout view of the slave |
 | `synth/netlist_master.v` | The netlist of master.v generated using yosys |
 | `synth/netlist_slave.v` | The netlist of the slave.v generated using yosys |
-
+| `gds/final_Master/` | The directory which holds all the final pd files for the master |
+| `gds/final_Slave/` | The directory which holds all the final pd files for the master |
 
 ---
 
