@@ -12,10 +12,17 @@ This implementation targets the standard 4-wire SPI bus (SCLK, MOSI, MISO, CS). 
 
 | File | Description |
 |---|---|
-| `Master.v` | Parameterized SPI master — multi-mode, multi-slave, full-duplex |
-| `Slave.v` | SPI slave — fixed Mode 0, full-duplex |
-| `Testbench_Master_TX.v` | Master-only testbench, exercises all 4 modes |
-| `Testbench_Slave_TX.v` | Master-slave loopback testbench with task-driven testing |
+| `src/Master.v` | Parameterized SPI master — multi-mode, multi-slave, full-duplex |
+| `src/Slave.v` | SPI slave — fixed Mode 0, full-duplex |
+| `test/Testbench_Master_TX.v` | Master-only testbench, exercises all 4 modes |
+| `test/Testbench_Slave_TX.v` | Master-slave loopback testbench with task-driven testing |
+| `images/Master/Schematic_Synth.pdf` | The Vivado-Generated Schematic after synthesis for the master |
+| `images/Master/schematic_generated.pdf` | The Vivado-Generated schematic of the elaborated design of the master | 
+| `images/Slave/Schematic_Synth.pdf` | The Vivado-Generated Schematic after synthesis for the slave |
+| `images/Slave/schematic_generated.pdf` | The Vivado-Generated schematic of the elaborated design of the slave | 
+| `synth/netlist_master.v` | The netlist of master.v generated using yosys |
+| `synth/netlist_slave.v` | The netlist of the slave.v generated using yosys |
+
 
 ---
 
@@ -28,7 +35,7 @@ This implementation targets the standard 4-wire SPI bus (SCLK, MOSI, MISO, CS). 
 | Parameter | Default | Description |
 |---|---|---|
 | `CLK_FREQ` | 100 MHz | System clock frequency |
-| `SCLK_FREQ` | 12.5 MHz | Target SPI clock frequency |
+| `SCLK_FREQ` | 25 MHz | Target SPI clock frequency |
 
 The internal SCLK divider is derived as `CLK_FREQ / (2 * SCLK_FREQ)`.
 
@@ -65,6 +72,8 @@ if(state == TRANSMIT) begin
     else               sclk = ~sclk_internal;  // CPHA=0: inverted phase
 end
 ```
+There will be no gated clock here as this is the signal which is transmitted to the slave and not used internally in the master
+
 
 **Receiver**
 
@@ -75,6 +84,7 @@ The master receiver samples MISO on the correct edge for each mode using a one-c
 ### Slave (`Slave.v`)
 
 The slave operates in **SPI Mode 0 only** (CPOL=0, CPHA=0). It is clocked from the system clock and uses `sclk` as a sampled input — edge detection is done via a registered copy (`rx`).
+and also has its own internal clock
 
 **Ports**
 
