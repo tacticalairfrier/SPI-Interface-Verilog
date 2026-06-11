@@ -176,13 +176,15 @@ else begin
             end
         end
     end
-        
+    DONE:begin
+        shiftregnext_rx = shiftreg_rx;
+    end
     endcase
 end
 end
-always@(*)begin
-    if(!reset)begin
+// always@(*)begin
+//     if(!reset)begin
         
-    end
-end
+//     end
+// end
 endmodule

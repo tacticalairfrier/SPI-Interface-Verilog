@@ -16,7 +16,7 @@ wire sdo_tb, sclk_tb;
     //using a single slave in transmittion mode
 Slave DUT_Sl_clk_0(
     .data_in(data_in_tb),
-    .mode(mode_tb),
+    // .mode(mode_tb),
     .clkin(clkgen),
     .reset(reset),
     .slave_select_in(slavechip),
@@ -59,6 +59,7 @@ always #5 clkgen = ~clkgen;
 // always #820 data_in_tb = $urandom_range(0,255);
 assign slavechip = slave_select_out[0];
 //making a task for the thing at various mdoes
+//used a task cos i learnt tasks today
 task TestWithMode (input [1:0] mode_task, input integer Times);
 begin
     enable = `TRUE;
@@ -77,31 +78,9 @@ initial begin
     //then the slave to master connection and then the full duplex connection
     $dumpfile("sim.vcd");
     $dumpvars(0,testbench);
-    // enable = `TRUE;
-    // // slave_select = `FALSE;
     slave_select_in = 2'b00;
-
-    // repeat(20)begin
-    //     // slave_select = `FALSE;
-    //     // enable = `TRUE;
-    //     data_in_tb = $ushourandom_range(0,255);
-    //     #800;
-    //     // slave_select = `TRUE;
-    //     // enable = `FALSE;
-    //     #80;
-    // end
-    // $finish;
-    counter = 2'b00;
-    while(counter != 2'b11)begin
-        enable = `TRUE;
-        TestWithMode(counter, 20);
-        counter = counter + 2'b01;
-        enable = `FALSE;
-        #800;
-    end
-    #800;
     enable = `TRUE;
-    TestWithMode(2'b11,20);
+    TestWithMode(2'b00,30);
     enable = `FALSE;
     $finish;
 end
